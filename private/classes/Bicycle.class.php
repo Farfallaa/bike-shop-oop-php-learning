@@ -10,252 +10,13 @@ class Bicycle extends DatabaseObject {
     //tell this class about the database connection so that
     //this connection would be available to every instance of this
     //class and to all of its subclasses:
-    //static protected $database; - no longer required
+    static protected $table_name = 'bicycles';
     static protected $db_columns = ['id', 'brand', 'model', 'year', 'category', 'color', 'gender', 'price', 'weight_kg', 'condition_id',
         'description'];
-    //create an empty array that will contain a list of errors:
-    public $errors = [];
-
-    static public function set_database($database){
-        self::$database = $database;
-    }
-
-    //this is an all purpose function to pass in
-    //any sql and perform a query for that class
-    //from the database.
-    static public function find_by_sql($sql){
-        $result = self::$database->query($sql);
-        if(!$result){
-            exit("Database query failed.");
-        }
-        //before we turn query into result we want to
-        //convert the results into objects:
-        //1. start with an empty array:
-        $object_array = [];
-        //do a while loop that itterates through the whole table
-        //row by row and while doing it Im calling a function
-        //instantiate
-        while($record = $result->fetch_assoc()){
-            $object_array[] = self::instantiate($record);
-        }
-
-        $result->free();
-
-        return $object_array;
-
-    }
-
-    static public function find_all(){
-    $sql = "SELECT * FROM bicycles";
-    return self::find_by_sql($sql);
-}
-
-    static public function find_by_id($id){
-        $sql = "SELECT * FROM bicycles ";
-        $sql .= "WHERE id ='". self::$database->escape_string($id) . "'";
-        $obj_array = self::find_by_sql($sql);
-        if(!empty($obj_array)){
-            return array_shift($obj_array);
-            //array shift shifts (takes) first value of the array
-            //turns it to an object and returns it back
-            }
-        else{
-            return false;
-        }
-
-    }
-
-    static protected function instantiate($record){
-       $object = new self;//this object has properties from the class bellow
-       //could manually assign values to properties
-       //but automatic assignment is going to be
-       //faster easier and re-usable.
-        //$property => value is the way this associative
-        //array is returned. First goes property and then
-        //values so for each cell there is a property-value pair
-        foreach($record as $property => $value){
-            if(property_exists($object, $property)){
-                $object->$property = $value;
-            }
-        }
-        return $object;
-    }
-//original create function. But since I want to do it
-//in a reusable fashion, I need to make it
-//one size fits all.
-//    public function create(){
-//        $sql = "INSERT INTO bicycles (";
-//        $sql .= "brand, model, year, category, color, gender, price, weight_kg, condition_id,
-//         description";
-//        $sql .= ") VALUES (";
-//        $sql .= "'".$this->brand."', ";
-//        $sql .= "'".$this->model."', ";
-//        $sql .= "'".$this->year."', ";
-//        $sql .= "'".$this->category."', ";
-//        $sql .= "'".$this->color."', ";
-//        $sql .= "'".$this->gender."', ";
-//        $sql .= "'".$this->price."', ";
-//        $sql .= "'".$this->weight_kg."', ";
-//        $sql .= "'".$this->condition_id."', ";
-//        $sql .= "'".$this->description."'";
-//        $sql .= ")";
-//        $result = self::$database->query($sql);
-//        //get an id of a newly created entry:
-//        if($result){
-//            $this->id = self::$database->insert_id;
-//        }
-//        return $result;//returns true or false
-//    }
-
-    //before creating or updating bicycle class check and see if its valid:
-    //the method should add any errors to errors array:
-    protected function validate()
-    {
-        //before need to ensure that the array is empty! so
-        //if by mistake is not empty, it resets itself to being
-        //empty once this function is run.
-        $this->errors = [];
-    if(is_blank($this->brand)){
-        $this->errors[] = "Brand cannot be blank.";
-    }
-    if(is_blank($this->model)){
-        $this->errors[] = "Model cannot be blank.";
-    }
-    return $this->errors;
-
-    }
-    //updated create function:
-    public function create(){
-        $this->validate();
-        //validate will fill the class variable with errors
-        //so you can continue only if there are no errors:
-        if(!empty($this->errors)){
-            return false;
-        }
-        $attributes = $this->sanitized_attributes();
-        $sql = "INSERT INTO bicycles (";
-        $sql .= join(', ', array_keys($attributes));
-        $sql .= ") VALUES ('";
-        $sql .= join("', '", array_values($attributes));
-        $sql .= "')";
-        $result = self::$database->query($sql);
-        //get an id of a newly created entry:
-        if($result){
-            $this->id = self::$database->insert_id;
-        }
-        return $result;//returns true or false
-    }
 
 
-
-
-    public function update(){
-        $this->validate();
-        //validate will fill the class variable with errors
-        //so you can continue only if there are no errors:
-        if(!empty($this->errors)){
-            return false;
-        }
-        $attributes = $this->sanitized_attributes();
-        $attribute_pairs = [];
-        foreach($attributes as $key => $value){
-            //e.g. brand = 'ereliukas';
-            $attribute_pairs[] = "{$key}='{$value}'";
-        }
-        $sql = "UPDATE bicycles SET ";
-        $sql .= join(', ', $attribute_pairs);
-        $sql .= " WHERE id='".self::$database->escape_string($this->id)."' ";
-        $sql .= "LIMIT 1";
-        $result = self::$database->query($sql);
-        return $result;
-    }
-
-    //Save will be a function that can be used instead of create and update:
-    public function save(){
-        //a new record will not have an id yet.
-        //so check if there is an id or not:
-
-        if(isset($this->id)){
-            return $this->update();
-        }
-        else{
-            return $this->create();
-        }
-    }
-
-    //fill in the object with properties from the form:
-    public function merge_attributes($args=[]){
-    //we wanna go through each of the args that
-        //are being passed in
-        //we wanna update the properties
-        //of this object accordingly
-        foreach($args as $key=>$value){
-            if(property_exists($this, $key) && !is_null($value)){
-                //e.g. $this->>brand
-                //e.g. $this->>year etc each time different
-                //as  the property is dynamic each time
-                //and taken from the arguments of the object
-                //array.
-                $this->$key = $value;
-                //after we finish running through this we
-                //know we have an object with its properties
-                //updated from the form values. we then need to
-                //save this updated object to the database
-                //so we write the update function.
-            }
-        }
-
-    }
-
-    //method that allows us to loop through
-    //the object columns and checks if they
-    //have a property
-    //so create this attributes function
-    //that is an associative array
-    //that has both the key and the value.
-    //key being a column list for object
-    //and values being form values
-    //properties which have database columns, excluding ID
-    public function attributes(){
-        $attributes = [];
-        foreach (self::$db_columns as $column){
-            if($column == 'id'){
-                continue;
-            }
-           $attributes[$column] = $this->$column;
-        }
-        return $attributes;
-    }
-
-    //function to sanitize the values
-    protected function sanitized_attributes(){
-        $sanitized = [];
-        foreach($this->attributes() as $key => $value){
-            //return same key but sanitized value for each of the
-            //keys in string:
-            $sanitized[$key] = self::$database->escape_string($value);
-        }
-        return $sanitized;
-    }
-
-    public function delete(){
-     $sql = "DELETE FROM bicycles ";
-     $sql .= "WHERE id='".self::$database->escape_string($this->id)."' ";
-     $sql .= "LIMIT 1";
-     $result = self::$database->query($sql);
-     return $result;
-     //after deleting the instance of the object
-     //will still exist even though the database record
-     //does not.
-     //This can be useful as in:
-        //echo $user->first_name."was deleted.";
-        //but, for example, we cant call $user->update() aftar
-        //calling $user->delete.
-    }
 
     // -----END OF ACTIVE RECORD CODE ------
-
-
 
     public $id;
     public $brand;
@@ -328,4 +89,23 @@ public function condition(){
         }
 
 }
+    //before creating or updating bicycle class check and see if its valid:
+    //the method should add any errors to errors array:
+    protected function validate()
+    {
+        //before need to ensure that the array is empty! so
+        //if by mistake is not empty, it resets itself to being
+        //empty once this function is run.
+        $this->errors = [];
+        if(is_blank($this->brand)){
+            $this->errors[] = "Brand cannot be blank.";
+        }
+        if(is_blank($this->model)){
+            $this->errors[] = "Model cannot be blank.";
+        }
+        //add custom validations
+        return $this->errors;
+
+    }
+
 }

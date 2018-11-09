@@ -50,10 +50,11 @@ spl_autoload_register('my_autoload');
 //var database becomes an object that is initialized by calling a
 //function db_connect
   $database = db_connect();
-  //send this database connection to bicycle class
+  //send this database connection to databaseobject class
   //by passing this connection as a variable in this function
-  //set database. in such way the bicycle class gets to know
+  //set database. in such way the database object class and all
+ //subsequent classes get to know
   //about the database connection.
-  Bicycle::set_database($database);
+  DatabaseObject::set_database($database);
 
 ?>
