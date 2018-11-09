@@ -7,6 +7,7 @@ if(is_post_request()) {
   // Create record using post parameters
   $args = $_POST['admin'];
   $admin = new Admin($args);
+  $admin->set_hashed_password();
   $result = $admin->save();
 
   if($result === true) {

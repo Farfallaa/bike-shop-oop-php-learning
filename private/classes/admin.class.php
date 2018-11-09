@@ -27,6 +27,10 @@ class Admin extends DatabaseObject {
     return $this->first_name . " " . $this->last_name;
   }
 
+  public function set_hashed_password(){
+    $this->hashed_password = password_hash($this->password, PASSWORD_BCRYPT);
+  }
+
 }
 
 ?>
