@@ -99,7 +99,20 @@
   // * For existing records, provide current ID as second argument
   //   has_unique_username('johnqpublic', 4)
   function has_unique_username($username, $current_id="0") {
-    // Need to re-write for OOP
+   $admin = Admin::find_by_username($username);
+   //if we get back false, then we know that the admin didn't exist before
+      //or if we get back admin and its id is the same as the current id
+      //because in such case you would be updating a record that
+      //does exist in the database.
+   if($admin===false||$admin->id == $current_id){
+     //if any of the above are correct then it means
+       //that we are either adding a new admin or updating existing one
+       //so the return will be true:
+       return true;
+   } else{
+     //it means that its not unique
+       return false;
+   }
   }
 
 ?>

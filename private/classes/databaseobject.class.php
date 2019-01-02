@@ -78,36 +78,17 @@ public $errors = [];
         }
         return $object;
     }
-//original create function. But since I want to do it
-//in a reusable fashion, I need to make it
-//one size fits all.
-//    public function create(){
-//        $sql = "INSERT INTO bicycles (";
-//        $sql .= "brand, model, year, category, color, gender, price, weight_kg, condition_id,
-//         description";
-//        $sql .= ") VALUES (";
-//        $sql .= "'".$this->brand."', ";
-//        $sql .= "'".$this->model."', ";
-//        $sql .= "'".$this->year."', ";
-//        $sql .= "'".$this->category."', ";
-//        $sql .= "'".$this->color."', ";
-//        $sql .= "'".$this->gender."', ";
-//        $sql .= "'".$this->price."', ";
-//        $sql .= "'".$this->weight_kg."', ";
-//        $sql .= "'".$this->condition_id."', ";
-//        $sql .= "'".$this->description."'";
-//        $sql .= ")";
-//        $result = self::$database->query($sql);
-//        //get an id of a newly created entry:
-//        if($result){
-//            $this->id = self::$database->insert_id;
-//        }
-//        return $result;//returns true or false
-//    }
 
+    protected function validate(){
+        $this->errors = [];
+
+        //add custom validations
+
+        return $this->errors;
+    }
 
     //updated create function:
-    public function create(){
+    protected function create(){
         $this->validate();
         //validate will fill the class variable with errors
         //so you can continue only if there are no errors:
@@ -129,7 +110,7 @@ public $errors = [];
     }
 
 
-    public function update(){
+    protected function update(){
         $this->validate();
         //validate will fill the class variable with errors
         //so you can continue only if there are no errors:
